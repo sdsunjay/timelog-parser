@@ -1,3 +1,5 @@
+import sys
+
 from datetime import datetime, timedelta
 from bs4 import BeautifulSoup
 
@@ -129,8 +131,19 @@ def reorder_table(file_name, date_column, start_time_column, end_time_column):
     #    table_html.tbody.append(BeautifulSoup(f'<tr>{"".join(["<td>{cell}</td>" for cell in row])}</tr>', 'html.parser'))
     return create_final_table(sorted_table)
 
+# Function to check if the file is an HTML file
+def is_html_file(filename):
+    return filename.endswith('.html') or filename.endswith('.htm')
 
-# Example usage:
-final_table_html = reorder_table('timelogTable.html', 0, 1, 2)
-with open('new.html', 'w') as f:
-    f.write(final_table_html)
+
+if len(sys.argv) > 1:
+    input_file = sys.argv[1]
+    if is_html_file(input_file):
+        # Main part of your script
+        final_table_html = reorder_table(file_name=input_file, date_column=0, start_time_column=1, end_time_column=2)
+        with open('new_timelog.html', 'w') as f:
+            f.write(final_table_html)
+    else:
+        print(f"Error: The file '{input_file}' is not an HTML file.")
+else:
+    print("Error: No input file name provided.")
