@@ -26,13 +26,13 @@ def time_delta(row, date_column, start_time_column, end_time_column):
         if end_time < start_time:
             end_time += timedelta(days=1)
 
-      # Calculate the time difference in minutes
+        # Calculate the time difference in minutes
         delta_minutes = (end_time - start_time).total_seconds() / 60
         return int(delta_minutes)
 
     except Exception as e:
         print(f"Error parsing time data: {e}")
-        return None
+        return -1
 
 def create_final_table(table:list) -> str:
     """
@@ -106,8 +106,12 @@ def reorder_table(file_name, date_column, start_time_column, end_time_column):
     - list: A list of headers from the table.
     - list: A list of calculated time deltas for each row.
     """
-    with open(file_name, 'r') as f:
-        soup = BeautifulSoup(f, 'html5lib')
+    return_boolean, original_table_html = extract_table_from_html(file_name)
+    if not return_boolean:
+        print(original_table_html)
+        return ""
+
+    soup = BeautifulSoup(original_table_html, 'html5lib')
     # remove the first row which are the headers
     table = process_html(soup)
     headers = table.pop(0)
@@ -116,6 +120,8 @@ def reorder_table(file_name, date_column, start_time_column, end_time_column):
 
     for item in table:
         time_delta_in_minutes = time_delta(item, 0, 1, 2)
+        if time_delta_in_minutes == -1:
+            return ""
         new_table.append(item)
         if item[5] == "xx" or int(item[5]) != int(time_delta_in_minutes):
             print("{} {} {}".format(item[0], item[5], time_delta_in_minutes))
@@ -134,6 +140,19 @@ def reorder_table(file_name, date_column, start_time_column, end_time_column):
 # Function to check if the file is an HTML file
 def is_html_file(filename):
     return filename.endswith('.html') or filename.endswith('.htm')
+
+def extract_table_from_html(file_path):
+    with open(file_path, 'r', encoding='utf-8') as file:
+        content = file.read()
+
+    start = content.find('<table')
+    end = content.find('</table>', start)
+
+    if start != -1 and end != -1:
+        table_content = content[start:end + 8]  # 8 is the length of '</table>'
+        return True, table_content
+    else:
+        return False, "Table tag not found."
 
 
 if len(sys.argv) > 1:
